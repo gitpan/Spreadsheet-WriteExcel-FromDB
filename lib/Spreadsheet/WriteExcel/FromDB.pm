@@ -2,7 +2,7 @@ package Spreadsheet::WriteExcel::FromDB;
 
 use strict;
 use vars qw/$VERSION/;
-$VERSION = 0.08;
+$VERSION = 0.09;
 
 use Spreadsheet::WriteExcel::Simple 0.02;
 
@@ -115,9 +115,9 @@ Only include these columns into the spreadsheet.
 
 =cut
 
-sub want_columns {
+sub include_columns {
   my $self = shift;
-  $self->{_want_columns} = [ @_ ];
+  $self->{_include_columns} = [ @_ ];
 }
 
 
@@ -146,7 +146,7 @@ sub _data_query {
 
 sub _columns_wanted {
   my $self = shift;
-  return @{$self->{_want_columns}} if $self->{_want_columns};
+  return @{$self->{_include_columns}} if $self->{_include_columns};
   my %ignore_columns = map { $_ => 1 } @{$self->{_ignore_columns}};
   return grep !$ignore_columns{$_}, $self->_columns_in_table;
 }
