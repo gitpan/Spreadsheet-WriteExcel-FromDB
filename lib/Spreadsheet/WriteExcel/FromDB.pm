@@ -2,7 +2,7 @@ package Spreadsheet::WriteExcel::FromDB;
 
 use strict;
 use vars qw/$VERSION/;
-$VERSION = 0.07;
+$VERSION = 0.08;
 
 use Spreadsheet::WriteExcel::Simple 0.02;
 
@@ -19,7 +19,11 @@ Spreadsheet::WriteExcel::FromDB - Convert a database table to an Excel spreadshe
   my $dbh = DBI->connect(...);
 
   my $ss = Spreadsheet::WriteExcel::FromDB->read($dbh, $table_name);
-     $ss->ignore_columns(qw/foo bar/);
+  $ss->ignore_columns(qw/foo bar/); 
+  # or
+  $ss->include_columns(qw/foo bar/); 
+
+  $ss->restrict_rows('age > 10');
 
   print $ss->as_xls;
 
@@ -45,15 +49,16 @@ Creates a spreadsheet object from a database handle and a table name.
 =cut
 
 sub read {
-   my $class = shift;
-   my $dbh   = shift or croak "Need a dbh";
-   my $table = shift or croak "Need a table";
-   my $self = {
-     _table          => $table,
-     _dbh            => $dbh,
-     _ignore_columns => [],
-   };
-   bless $self, $class;
+  my $class = shift;
+  my $dbh   = shift or croak "Need a dbh";
+  my $table = shift or croak "Need a table";
+  bless {
+    _table           => $table,
+    _dbh             => $dbh,
+    _where           => "",
+    _ignore_columns  => [],
+    _include_columns => [],
+  }, $class;
 }
 
 =head2 dbh / table
@@ -74,11 +79,26 @@ sub table {
   $self->{_table};
 }
 
+=head2 restrict_rows
+
+  $ss->restrict_rows('age > 10');
+
+An optional 'WHERE' clause for restricting the rows returned from the
+database.
+
+=cut
+
+sub restrict_rows {
+  my $self = shift;
+  $self->{_where} = shift if $_[0];
+  $self->{_where};
+}
+
 =head2 ignore_columns
 
   $ss->ignore_columns(qw/foo bar/);
 
-Do not output these columns into the spreadsheet.
+Output all columns, except these ones, to the spreadsheet.
 
 =cut
 
@@ -86,6 +106,20 @@ sub ignore_columns {
   my $self = shift;
   $self->{_ignore_columns} = [ @_ ];
 }
+
+=head2 include_columns
+
+  $ss->include_columns(qw/foo bar/);
+
+Only include these columns into the spreadsheet.
+
+=cut
+
+sub want_columns {
+  my $self = shift;
+  $self->{_want_columns} = [ @_ ];
+}
+
 
 =head2 as_xls
 
@@ -96,21 +130,23 @@ Return the table as an Excel spreadsheet.
 sub as_xls {
   my $self  = shift;
   my $ss = Spreadsheet::WriteExcel::Simple->new;
-     $ss->write_bold_row([$self->_columns_wanted]);
-     $ss->write_row($_)
-       foreach @{$self->dbh->selectall_arrayref($self->_data_query)};
+  $ss->write_bold_row([$self->_columns_wanted]);
+  $ss->write_row($_)
+  foreach @{$self->dbh->selectall_arrayref($self->_data_query)};
   return $ss->data;
 }
 
 sub _data_query {
   my $self   = shift;
-  return sprintf 'SELECT %s FROM %s',
-           (join ', ', $self->_columns_wanted),
-           $self->table;
+  my $query = sprintf 'SELECT %s FROM %s',
+    (join ', ', $self->_columns_wanted), $self->table;
+  $query .= " WHERE " . $self->restrict_rows if $self->restrict_rows;
+  return $query;
 }
 
 sub _columns_wanted {
-  my $self   = shift;
+  my $self = shift;
+  return @{$self->{_want_columns}} if $self->{_want_columns};
   my %ignore_columns = map { $_ => 1 } @{$self->{_ignore_columns}};
   return grep !$ignore_columns{$_}, $self->_columns_in_table;
 }
@@ -118,11 +154,10 @@ sub _columns_wanted {
 sub _columns_in_table {
   my $self = shift;
   my $helper_type = $self->dbh->{Driver}->{Name}
-       or die 'I cannot work out what kind of database we have';
+    or die 'I cannot work out what kind of database we have';
   my $helper = join "::", ref $self, $helper_type;
   eval "require $helper";
   die "We have no handler for $helper_type tables: $@\n" if $@;
-
   return $helper->columns_in_table($self->dbh, $self->table);
 }
 
@@ -140,7 +175,7 @@ L<Spreadsheet::WriteExcel::Simple>. L<Spreadsheet::WriteExcel>. L<DBI>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2001 Tony Bowden. All rights reserved.
+Copyright (C) 2001-2002 Tony Bowden. All rights reserved.
 
 This module is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
