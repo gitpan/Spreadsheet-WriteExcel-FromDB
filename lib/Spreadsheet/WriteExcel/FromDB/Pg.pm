@@ -3,7 +3,7 @@ package Spreadsheet::WriteExcel::FromDB::sybase;
 use strict;
 use base qw/Spreadsheet::WriteExcel::FromDB::column_finder/;
 use vars qw/$VERSION/;
-$VERSION = 0.01;
+$VERSION = 0.02;
 
 #######################################################
 # taken from postgresql 7.1.2 src/bin/psql/describe.c
@@ -16,7 +16,6 @@ sub query {
        WHERE c.relname = \'$_[1]\'
          AND a.attnum > 0
          AND a.attrelid = c.oid
-       ORDER BY a.attname
    };
 }
 

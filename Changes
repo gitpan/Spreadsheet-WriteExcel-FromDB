@@ -1,5 +1,8 @@
 Revision history 
 
+0.05  Wed Feb 20 2002
+	+ tweak PostgreSQL query (from Thomas Mason)
+
 0.04  Fri Dec 28 2001
 	+ added PostgreSQL query (from Thomas Mason)
 

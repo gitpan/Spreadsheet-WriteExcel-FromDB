@@ -2,7 +2,7 @@ package Spreadsheet::WriteExcel::FromDB;
 
 use strict;
 use vars qw/$VERSION/;
-$VERSION = 0.04;
+$VERSION = 0.05;
 
 use Spreadsheet::WriteExcel::Simple 0.02;
 
