@@ -1,5 +1,8 @@
 Revision history 
 
+0.06  Wed Feb 20 2002
+	+ Bugfix on Pg subclass
+
 0.05  Wed Feb 20 2002
 	+ tweak PostgreSQL query (from Thomas Mason)
 

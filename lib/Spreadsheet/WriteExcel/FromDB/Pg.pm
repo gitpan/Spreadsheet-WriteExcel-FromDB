@@ -1,9 +1,9 @@
-package Spreadsheet::WriteExcel::FromDB::sybase;
+package Spreadsheet::WriteExcel::FromDB::Pg;
 
 use strict;
 use base qw/Spreadsheet::WriteExcel::FromDB::column_finder/;
 use vars qw/$VERSION/;
-$VERSION = 0.02;
+$VERSION = 0.03;
 
 #######################################################
 # taken from postgresql 7.1.2 src/bin/psql/describe.c
