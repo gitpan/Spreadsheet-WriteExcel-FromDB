@@ -2,7 +2,7 @@ package Spreadsheet::WriteExcel::FromDB;
 
 use strict;
 use vars qw/$VERSION/;
-$VERSION = 0.02;
+$VERSION = 0.03;
 
 use Spreadsheet::WriteExcel::Simple 0.02;
 
@@ -32,9 +32,9 @@ task to perform this in Excel. However, you may choose to ignore certain
 columns, using the 'ignore_columns' method.
 
 This relies on us knowing how to access the table information for this
-database. This is done by delegating the call 'columns_in_table' to an
-appropriate subclass. (At the moment this only exists for MySQL, but
-more to follow ...)
+database. This is done by delegating the call 'columns_in_table' to
+an appropriate subclass. (At the moment this only exists for MySQL and
+Sybase, but please send me more!)
 
 =head1 METHODS
 
