@@ -1,8 +1,11 @@
 Revision history 
 
+0.04  Fri Dec 28 2001
+	+ added PostgreSQL query (from Thomas Mason)
+
 0.03  Mon Aug 27 2001
 	+ added Sybase query (from Matt Sanford)
-        - split out common code to column_finder.pm
+  - split out common code to column_finder.pm
 
 0.02  Fri Aug 24 2001
 	+ split MySQL-specific code out
