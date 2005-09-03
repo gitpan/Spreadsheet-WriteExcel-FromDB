@@ -1,5 +1,10 @@
 Revision history 
 
+1.00  Sat Sep 14 2002
+	+ Add write_xls() method 
+	+ Get column information in database agnostic manner
+	+ Add some actual tests
+
 0.08  Sat Sep 14 2002
 	+ added 'restrict_rows' and 'columns_wanted' (from Drew Taylor)
 

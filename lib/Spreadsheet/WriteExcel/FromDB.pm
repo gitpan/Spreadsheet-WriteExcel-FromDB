@@ -1,12 +1,12 @@
 package Spreadsheet::WriteExcel::FromDB;
 
+$VERSION = '1.00';
+
 use strict;
-use vars qw/$VERSION/;
-$VERSION = 0.09;
 
-use Spreadsheet::WriteExcel::Simple 0.02;
+use Spreadsheet::WriteExcel::Simple 1.03;
 
-sub croak { require Carp; Carp::croak(@_) }
+sub _croak { require Carp; Carp::croak(@_) }
 
 =head1 NAME
 
@@ -26,6 +26,8 @@ Spreadsheet::WriteExcel::FromDB - Convert a database table to an Excel spreadshe
   $ss->restrict_rows('age > 10');
 
   print $ss->as_xls;
+  # or
+	$ss->write_xls('spreadsheet.xls');
 
 =head1 DESCRIPTION
 
@@ -34,11 +36,6 @@ This module exports a database table as an Excel Spreadsheet.
 The data is not returned in any particular order, as it is a simple
 task to perform this in Excel. However, you may choose to ignore certain
 columns, using the 'ignore_columns' method.
-
-This relies on us knowing how to access the table information for
-this database. This is done by delegating the call 'columns_in_table'
-to an appropriate subclass. (At the moment this only exists for MySQL,
-PostgreSQL, Oracle and Sybase, but please send me more!)
 
 =head1 METHODS
 
@@ -50,8 +47,8 @@ Creates a spreadsheet object from a database handle and a table name.
 
 sub read {
   my $class = shift;
-  my $dbh   = shift or croak "Need a dbh";
-  my $table = shift or croak "Need a table";
+  my $dbh   = shift or _croak "Need a dbh";
+  my $table = shift or _croak "Need a table";
   bless {
     _table           => $table,
     _dbh             => $dbh,
@@ -120,20 +117,39 @@ sub include_columns {
   $self->{_include_columns} = [ @_ ];
 }
 
-
 =head2 as_xls
+
+  print $ss->as_xls;
 
 Return the table as an Excel spreadsheet.
 
 =cut
 
-sub as_xls {
+sub as_xls { 
+	shift->_xls->data;
+}
+
+sub _xls {
   my $self  = shift;
-  my $ss = Spreadsheet::WriteExcel::Simple->new;
-  $ss->write_bold_row([$self->_columns_wanted]);
-  $ss->write_row($_)
-  foreach @{$self->dbh->selectall_arrayref($self->_data_query)};
-  return $ss->data;
+	$self->{_xls} ||= do { 
+		my $ss = Spreadsheet::WriteExcel::Simple->new;
+		$ss->write_bold_row([$self->_columns_wanted]);
+		$ss->write_row($_) for @{$self->dbh->selectall_arrayref($self->_data_query)};
+		$ss;
+	};
+}
+
+=head2 write_xls
+
+	$ss->write_xls('spreadsheet.xls');
+
+Write the table to a spreadsheet with the given filename.
+
+=cut
+
+sub write_xls { 
+	my ($self, $filename) = @_;
+	$self->_xls->save($filename);
 }
 
 sub _data_query {
@@ -146,19 +162,19 @@ sub _data_query {
 
 sub _columns_wanted {
   my $self = shift;
-  return @{$self->{_include_columns}} if $self->{_include_columns};
+	my @include = @{$self->{_include_columns}};
+	@include = $self->_columns_in_table unless @include;
   my %ignore_columns = map { $_ => 1 } @{$self->{_ignore_columns}};
   return grep !$ignore_columns{$_}, $self->_columns_in_table;
 }
 
 sub _columns_in_table {
   my $self = shift;
-  my $helper_type = $self->dbh->{Driver}->{Name}
-    or die 'I cannot work out what kind of database we have';
-  my $helper = join "::", ref $self, $helper_type;
-  eval "require $helper";
-  die "We have no handler for $helper_type tables: $@\n" if $@;
-  return $helper->columns_in_table($self->dbh, $self->table);
+	my $query = sprintf "SELECT * FROM %s WHERE 1 = 0", $self->table;
+	(my $sth = $self->dbh->prepare($query))->execute;
+	my @cols = @{$sth->{NAME}};
+	$sth->finish;
+	return @cols;
 }
 
 =head1 BUGS
@@ -167,18 +183,28 @@ Dates are handled as strings, rather than dates.
 
 =head1 AUTHOR
 
-Tony Bowden, E<lt>kasei@tmtm.comE<gt>.
+Tony Bowden
+
+=head1 BUGS and QUERIES
+
+Please direct all correspondence regarding this module to:
+  bug-Spreadsheet-WriteExcel-Simple@rt.cpan.org
+
+=head1 COPYRIGHT AND LICENSE
+
+  Copyright (C) 2001-2005 Tony Bowden.
+
+  This program is free software; you can redistribute it and/or modify it under
+  the terms of the GNU General Public License; either version 2 of the License,
+  or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.
 
 =head1 SEE ALSO
 
 L<Spreadsheet::WriteExcel::Simple>. L<Spreadsheet::WriteExcel>. L<DBI>
-
-=head1 COPYRIGHT
-
-Copyright (C) 2001-2002 Tony Bowden. All rights reserved.
-
-This module is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
 
 =cut
 

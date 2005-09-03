@@ -1,10 +1,9 @@
 Changes
-MANIFEST
-Makefile.PL
 lib/Spreadsheet/WriteExcel/FromDB.pm
-lib/Spreadsheet/WriteExcel/FromDB/mysql.pm
-lib/Spreadsheet/WriteExcel/FromDB/Oracle.pm
-lib/Spreadsheet/WriteExcel/FromDB/Pg.pm
-lib/Spreadsheet/WriteExcel/FromDB/sybase.pm
-lib/Spreadsheet/WriteExcel/FromDB/column_finder.pm
+Makefile.PL
+MANIFEST			This list of files
+META.yml
+README
 t/01.t
+t/pod-coverage.t
+t/pod.t
